@@ -149,7 +149,7 @@ function renderLogin(error) {
         state.me.threadsConfigured
           ? h("a", { class: "btn primary big", href: "/auth/threads/login", style: "display:block;text-decoration:none" }, "Masuk dengan Threads")
           : h("p", { class: "notice warn", style: "margin-bottom:14px;text-align:left" },
-              "Threads API belum diisi di server (THREADS_APP_ID & THREADS_APP_SECRET di .env). Sementara ini kamu bisa mencoba mode demo — posting hanya disimulasikan."),
+              "Threads API belum diisi di server (secret THREADS_APP_ID & THREADS_APP_SECRET). Sementara ini kamu bisa mencoba mode demo — posting hanya disimulasikan."),
         state.me.demoMode && demoBtn,
         h("ol", { class: "steps" },
           h("li", {}, h("b", {}, "Masuk sekali klik. "), "Tanpa password — cukup izinkan lewat akun Threads kamu."),
@@ -300,7 +300,7 @@ function composeEditor() {
         imageUrl: d.imageUrl,
         scheduledAt: d.when === "later" ? new Date(d.scheduledAt).toISOString() : null,
       });
-      toast(d.when === "now" ? "Utas sedang diposting…" : "Utas dijadwalkan.");
+      toast(d.when === "now" ? "Utas masuk antrean, terbit dalam ±1 menit." : "Utas dijadwalkan.");
       state.draft = newDraft();
       state.tab = "riwayat";
       await refreshThreads();
@@ -401,7 +401,7 @@ function viewHistory() {
 function threadCard(t) {
   const link = t.results[0]?.permalink;
   const when =
-    t.status === "scheduled" ? `untuk ${fmtTime(t.scheduledAt)}`
+    t.status === "scheduled" ? (t.immediate ? "dalam antrean, terbit dalam ±1 menit" : `untuk ${fmtTime(t.scheduledAt)}`)
     : t.status === "published" ? fmtTime(t.publishedAt)
     : t.status === "publishing" ? `${t.results.length}/${t.posts.length} post`
     : `berhenti di post ${t.results.length + 1} dari ${t.posts.length}`;
@@ -415,7 +415,7 @@ function threadCard(t) {
   return h("article", { class: "card" },
     h("div", { class: "spread", style: "margin-bottom:8px" },
       h("div", { class: "row" },
-        h("span", { class: `badge ${t.status}` }, STATUS_LABELS[t.status]),
+        h("span", { class: `badge ${t.status}` }, t.status === "scheduled" && t.immediate ? "Antre" : STATUS_LABELS[t.status]),
         h("span", { class: "muted small" }, when),
         t.source === "autopilot" && h("span", { class: "badge off" }, "Autopilot")),
       h("div", { class: "row" },

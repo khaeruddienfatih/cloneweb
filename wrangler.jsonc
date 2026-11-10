@@ -1,0 +1,23 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "utasin",
+  "main": "src/worker.js",
+  "compatibility_date": "2026-10-01",
+  "compatibility_flags": ["nodejs_compat"],
+
+  // Antarmuka web (folder public/) dilayani langsung oleh Cloudflare.
+  "assets": { "directory": "./public" },
+
+  // Database D1. Tanpa database_id, Wrangler membuatkannya otomatis saat deploy pertama.
+  "d1_databases": [{ "binding": "DB", "database_name": "utasin" }],
+
+  // Penjadwal: tiap menit memeriksa utas yang waktunya terbit dan slot Autopilot.
+  "triggers": { "crons": ["* * * * *"] },
+
+  "vars": {
+    "TIMEZONE": "Asia/Jakarta",
+    "CLAUDE_MODEL": "claude-opus-5-5"
+  },
+
+  "observability": { "enabled": true }
+}

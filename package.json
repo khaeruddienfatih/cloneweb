@@ -1,17 +1,19 @@
 {
   "name": "utasin",
-  "version": "1.0.0",
-  "description": "Auto utas Threads untuk jualan affiliate, ditulis oleh Claude",
+  "version": "2.0.0",
+  "description": "Auto utas Threads untuk jualan affiliate, ditulis oleh Claude. Berjalan di Cloudflare Workers.",
   "type": "module",
   "private": true,
-  "engines": { "node": ">=20.12" },
   "scripts": {
-    "start": "node server.js",
-    "dev": "node --watch server.js"
+    "dev": "wrangler dev --test-scheduled",
+    "deploy": "wrangler deploy"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^1.7.0",
-    "express": "^5.3.0",
+    "hono": "^4.13.17",
     "zod": "^4.6.7"
+  },
+  "devDependencies": {
+    "wrangler": "^4.160.0"
   }
 }

@@ -1,0 +1,11 @@
+# Rahasia untuk `npm run dev` (salin menjadi .dev.vars).
+# Di Cloudflare, isi nilai yang sama lewat `npx wrangler secret put NAMA`
+# atau dashboard: Workers -> utasin -> Settings -> Variables and Secrets.
+
+# Claude API — https://platform.claude.com -> API Keys
+ANTHROPIC_API_KEY=
+
+# Threads API — https://developers.facebook.com, use case "Access the Threads API"
+# Kosongkan keduanya untuk mode demo (posting hanya simulasi).
+THREADS_APP_ID=
+THREADS_APP_SECRET=

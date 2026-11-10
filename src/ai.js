@@ -2,11 +2,8 @@
 import Anthropic from "@anthropic-ai/sdk";
 import { betaZodOutputFormat } from "@anthropic-ai/sdk/helpers/beta/zod";
 import { z } from "zod";
-import { config } from "./config.js";
 import { MAX_POST_LENGTH } from "./threadsApi.js";
 
-let client;
-const getClient = () => (client ??= new Anthropic());
 
 const ThreadSchema = z.object({
   posts: z.array(z.string()).describe("Isi tiap post, berurutan dari post pembuka sampai penutup"),
@@ -76,15 +73,20 @@ export class AiError extends Error {
 }
 
 /**
+ * @param {object} app konteks aplikasi (lihat context.js)
  * @param {{name: string, link: string, price?: string, description?: string, audience?: string}} product
  * @param {{postCount: number, tone: string, disclosure: boolean, angle?: string, avoid?: string[]}} opts
  * @returns {Promise<string[]>} isi tiap post
  */
-export async function generateThread(product, opts) {
+export async function generateThread(app, product, opts) {
+  if (!app.anthropic.apiKey) {
+    throw new AiError("API key Claude belum diisi. Tambahkan secret ANTHROPIC_API_KEY di Cloudflare.", 500);
+  }
+  const client = new Anthropic(app.anthropic);
   let response;
   try {
-    response = await getClient().beta.messages.parse({
-      model: config.model,
+    response = await client.beta.messages.parse({
+      model: app.model,
       max_tokens: 16000,
       system: SYSTEM,
       messages: [{ role: "user", content: buildPrompt(product, opts) }],
@@ -95,10 +97,10 @@ export async function generateThread(product, opts) {
     });
   } catch (err) {
     if (err instanceof Anthropic.AuthenticationError) {
-      throw new AiError("API key Claude tidak valid. Periksa ANTHROPIC_API_KEY di file .env.", 500);
+      throw new AiError("API key Claude tidak valid. Periksa secret ANTHROPIC_API_KEY.", 500);
     }
     if (err instanceof Anthropic.PermissionDeniedError || err instanceof Anthropic.NotFoundError) {
-      throw new AiError(`Model "${config.model}" tidak bisa diakses dengan API key ini.`, 500);
+      throw new AiError(`Model "${app.model}" tidak bisa diakses dengan API key ini.`, 500);
     }
     if (err instanceof Anthropic.RateLimitError) {
       throw new AiError("Claude sedang kena rate limit. Coba lagi sebentar lagi.", 429);
@@ -109,8 +111,7 @@ export async function generateThread(product, opts) {
     if (err instanceof Anthropic.APIError) {
       throw new AiError(`Claude API error ${err.status}: ${err.message}`);
     }
-    // Biasanya: kredensial belum diisi sama sekali.
-    throw new AiError(`Claude belum bisa dipakai: ${err.message}. Isi ANTHROPIC_API_KEY di file .env.`, 500);
+    throw new AiError(`Claude belum bisa dipakai: ${err.message}`, 500);
   }
 
   if (response.stop_reason === "refusal") {
